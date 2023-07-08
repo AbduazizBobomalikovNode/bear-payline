@@ -214,4 +214,8 @@ async function testDocument() {
 // testPartner();
 // testRole();
 // testDevice();
-testDocument();
+// testDocument();
+
+const json = require('./JsonModule/main');
+
+json();
