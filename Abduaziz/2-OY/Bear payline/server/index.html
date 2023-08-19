@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Hello world</title>
+</head>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io('/1254');
+    socket.on('hi', function(data) {
+        document.body.innerHTML = '';
+        document.write(data);
+    });
+</script>
+
+<body>
+
+</body>
+
+</html>

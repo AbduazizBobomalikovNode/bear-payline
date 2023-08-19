@@ -1,0 +1,113 @@
+function Country(db) {
+    this.getCountry = async(id) => {
+        var myResult = null;
+        db.query("SELECT * FROM сountry  WHERE id='" + id + "'", function(err, result, fields) {
+            if (err) {
+                console.log(err.sqlMessage);
+                myResult = [false];
+            } else myResult = result;
+        });
+        while (myResult == null) {
+            await sleep(5);
+        }
+        return myResult[0];
+    }
+    this.getCountryAll = async() => {
+        var myResult = null;
+        db.query("SELECT * FROM сountry", function(err, result, fields) {
+            if (err) {
+                console.log(err);
+                myResult = false;
+            } else myResult = result;
+        });
+        while (myResult == null) {
+            await sleep(5);
+        }
+        return myResult;
+    }
+    this.addCountry = async(country) => { //id, full_name, phone, address, email, status, email_status, idcountry, idrole
+        var values = "";
+        var keys = "";
+        var myResult = null;
+        for (const key in country) {
+            if (Object.hasOwnProperty.call(country, key)) {
+                values += '"' + country[key] + '" ,';
+                keys += key + ",";
+            }
+        }
+
+        var sql = 'INSERT INTO сountry (' + keys + ') VALUES(' + values + ')';
+        sql = sql.replaceAll(',)', ')');
+        db.query(sql, function(err, result) {
+            if (err) {
+                console.log(err.sqlMessage);
+                myResult = {
+                    error: {
+                        message: err.sqlMessage
+                    }
+                };
+            } else myResult = result;
+        });
+        while (myResult == null) {
+            await sleep(5);
+        }
+        return myResult;
+    }
+    this.update = async(id, country) => {
+        var myResult = null;
+        var sql = 'UPDATE сountry SET ';
+        for (const key in country) {
+            if (Object.hasOwnProperty.call(country, key)) {
+                if (typeof country[key] == 'string') {
+                    sql += key + '= "' + country[key] + '"';
+                } else {
+                    sql += key + '= ' + country[key] + ' ';
+                }
+            }
+        }
+        sql += 'WHERE id =' + id;
+        db.query(sql, function(err, result) {
+            if (err) {
+                console.log(err.sqlMessage);
+                myResult = {
+                    error: {
+                        message: err.sqlMessage
+                    }
+                };
+            } else myResult = result;
+        });
+        while (myResult == null) {
+            await sleep(5);
+        }
+        return this.getCountry(id);
+    }
+    this.delete = async(id) => {
+        var myResult = null;
+        var sql = "DELETE FROM сountry WHERE id = " + id;
+        db.query(sql, function(err, result) {
+            if (err) {
+                myResult = {
+                    error: {
+                        message: err.sqlMessage
+                    }
+                };
+            } else myResult = result;
+        });
+        while (myResult == null) {
+            await sleep(5);
+        }
+        return myResult;
+    }
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+module.exports = Country;
+/*
+getCountry()
+getCountryAll()
+addCountry()
+update()
+delete()
+*/

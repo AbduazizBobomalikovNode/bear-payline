@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <script type="module">
+        import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js"; const socket = io();
+    </script> -->
+    <script>
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>Document</title>
+</head>
+
+<body>
+
+
+    <script type="module">
+        import {
+            io
+        } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
+        console.log(io);
+        $(document).ready(function() {
+            var socket = io("http://localhost:3000/chat");
+
+            $('#form').submit(function() {
+                socket.emit('chat message', $('#input').val());
+                $('#input').val('');
+                return false;
+            });
+
+            socket.on('chat message', function(message) {
+                $('#messages').append($('<li>').text(message));
+            });
+        });
+    </script>
+
+</body>
+
+</html>
