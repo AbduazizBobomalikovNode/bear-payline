@@ -1,8 +1,9 @@
 var searchError = require('../../../resurs/funtion/erors');
+const { toNum, safeDoc, safeFilter } = require('../safe');
 
 function User(db) { //getUserForObj
     this.getUser = async(id) => {
-        const result = await db.findOne({ id: id }, { projection: { _id: 0 } })
+        const result = await db.findOne({ id: toNum(id) }, { projection: { _id: 0 } })
             .then(resultin => {
                 return resultin;
             })
@@ -13,7 +14,7 @@ function User(db) { //getUserForObj
         return result;
     }
     this.getUserForObj = async(obj) => {
-        const result = await db.findOne(obj, { projection: { _id: 0 } })
+        const result = await db.findOne(safeFilter(obj), { projection: { _id: 0 } })
             .then(resultin => {
                 return resultin;
             })
@@ -24,13 +25,13 @@ function User(db) { //getUserForObj
         return result;
     }
     this.getUserRole = async(id) => {
-        const result = await db.find({ idrole: id }, { projection: { _id: 0 } })
+        const result = await db.find({ idrole: toNum(id) }, { projection: { _id: 0 } })
             .sort({ full_name: 1, phone: 1, idcountry: 1 }).toArray()
         return result;
     }
 
     this.getUserCountry = async(id) => {
-        const result = await db.find({ idcountry: id }, { projection: { _id: 0 } })
+        const result = await db.find({ idcountry: toNum(id) }, { projection: { _id: 0 } })
             .sort({ full_name: 1, phone: 1, idcountry: 1 }).toArray()
         return result;
     }
@@ -52,8 +53,8 @@ function User(db) { //getUserForObj
     }
     this.update = async(id, user) => {
         const result = await db
-            .updateMany({ id: id }, {
-                $set: user,
+            .updateMany({ id: toNum(id) }, {
+                $set: safeDoc(user),
                 $currentDate: { lastModified: true }
             }).catch(err => {
                 let error = { error: [] };
@@ -64,7 +65,7 @@ function User(db) { //getUserForObj
         return userx;
     }
     this.delete = async(id) => {
-        const result = await db.deleteOne({ id: id })
+        const result = await db.deleteOne({ id: toNum(id) })
         return result;
     }
 }

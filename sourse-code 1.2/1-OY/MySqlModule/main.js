@@ -12,10 +12,10 @@ const device = require('./partTable/device');
 const document = require('./partTable/document');
 
 var con = mysql.createConnection({
-    host: "localhost",
-    user: "admin",
-    password: "@dm1nb1ll1@rd$r##m",
-    database: "bear"
+    host: process.env.MYSQL_HOST,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE
 });
 
 class Db {

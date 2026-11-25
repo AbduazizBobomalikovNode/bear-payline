@@ -1,49 +1,63 @@
-const jwt = require('jsonwebtoken');
-const jwt_my_key = process.env.JWT_MY_KEY || "***REMOVED***";
+const { verifyToken } = require('../resurs/funtion/token');
+const { isAllowed } = require('../resurs/funtion/licence');
+const { isAdmin } = require('../resurs/funtion/access');
+const createLimiter = require('../resurs/funtion/rateLimit');
 
-// const chekt = {
-//     'student': ['add', 'get', 'all', 'uptade', 'delete'],
-//     'user': ['add', 'get', 'all', 'uptade', 'delete'],
-//     'category': ['add', 'get', 'all', 'uptade', 'delete'],
-//     'teacher': ['add', 'get', 'all', 'uptade', 'delete'],
-//     'presence': ['add', 'get', 'all', 'uptade', 'delete'],
-//     'course': ['add', 'get', 'all', 'uptade', 'delete'],
-//     'paymentNumber': ['get', 'all', 'uptade', 'delete'],
-//     'group': ['add', 'get', 'all', 'uptade', 'delete'],
-//     'payments': ['add', 'get', 'all', 'uptade', 'delete'],
-//     'studentHasGroup': ['add', 'get', 'all', 'uptade', 'delete']
-// }
+// Har bir foydalanuvchiga 1 sekundda 100 ta so'rov (avvalgi `limit` mantig'i, lekin serverda saqlanadi).
+const userLimiter = createLimiter({
+    windowMs: 1000,
+    max: 100,
+    keyFn: (req) => (req.user ? 'u' + req.user.id : req.ip),
+    message: "So'rovlar ko'p so'ldi. 1 sekuntdan keyin qaytatdan urinib ko'ring."
+});
 
-
-
-module.exports = async function(req, res, next) {
-    return next();
-    let path_req = req.originalUrl.split('/');
-    const token = req.header('x-web-token');
-    try {
-        const expiredAt = jwt.decode(token).exp;
-        const now = Math.floor(Date.now() / 1000);
-        if (expiredAt < now) {
-            console.log('Token yaroqsiz');
-            return res.status(401).json({ error: "autorizatsiya eskirgan!" })
-        }
-        const user = jwt.verify(token, jwt_my_key);
-        if (!(user.licence[path_req[2]] ? user.licence[path_req[2]].includes(path_req[3]) : false)) {
-            return res.status(400).json({ error: "ush bu foydalanuvchi bu bo'limdan foydalana olmaydi." });
-        }
-        if (user.limit.count <= 0 && (new Date()).valueOf() < user.limit.time) {
-            return res.status(429).json({ error: "juda ko'p so'rovlar  bo'ldi. 1 sekuntdan keyin qaytatdan urinib ko'ring." });
-        } else if ((new Date()).valueOf() > user.limit.time) {
-            user.limit.count = 100;
-        }
-        req.user = user;
-        return next();
-    } catch (err) {
-        const { message } = err;
-        if (message == "jwt must be provided") {
-            return res.status(400).json({ error: "web token jonatilmagan!" })
-        } else {
-            return res.status(401).json({ error: "ushbu foydalanuvchi autorizatsiya qilmagan!" })
-        }
-    }
+function readToken(req) {
+    const h = req.header('x-web-token');
+    if (h) return h;
+    const a = req.header('authorization');
+    if (a && /^Bearer\s+/i.test(a)) return a.replace(/^Bearer\s+/i, '');
+    return null;
 }
+
+// Tokenni tekshiradi va req.user ni o'rnatadi (litsenziyani tekshirmaydi).
+function authenticate(req, res, next) {
+    const token = readToken(req);
+    if (!token) {
+        return res.status(401).json({ error: "Avtorizatsiyadan o'tilmagan, token yuborilmagan." });
+    }
+    try {
+        req.user = verifyToken(token);
+    } catch (err) {
+        if (err && err.name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'Token muddati tugagan, qaytadan kiring.' });
+        }
+        return res.status(401).json({ error: "Token noto'g'ri." });
+    }
+    return userLimiter(req, res, next);
+}
+
+// Token + litsenziya: /api/<resurs>/<amal>/... yo'li bo'yicha.
+function authorize(req, res, next) {
+    return authenticate(req, res, (err) => {
+        if (err) return next(err);
+        const parts = req.originalUrl.split('?')[0].split('/');
+        const resource = parts[2];
+        const action = parts[3];
+        if (!isAllowed(req.user.licence, resource, action)) {
+            return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+        }
+        return next();
+    });
+}
+
+function requireAdmin(req, res, next) {
+    if (!isAdmin(req.user)) {
+        return res.status(403).json({ error: "Faqat administrator uchun." });
+    }
+    return next();
+}
+
+module.exports = authorize;
+module.exports.authenticate = authenticate;
+module.exports.requireAdmin = requireAdmin;
+module.exports.readToken = readToken;

@@ -1,8 +1,9 @@
 var searchError = require('../../../resurs/funtion/erors');
+const { toNum, safeDoc, safeFilter } = require('../safe');
 // Device
 function Device(db) {
     this.getDevice = async(id) => {
-        const result = await db.findOne({ id: id }, { projection: { _id: 0 } })
+        const result = await db.findOne({ id: toNum(id) }, { projection: { _id: 0 } })
             .then(result => {
                 return result;
             })
@@ -13,7 +14,7 @@ function Device(db) {
         return result;
     }
     this.getDeviceUser = async(id) => { //iduser
-        const result = await db.find({ iduser: id }, { projection: { _id: 0 } })
+        const result = await db.find({ iduser: toNum(id) }, { projection: { _id: 0 } })
             .sort({ date: 1 }).toArray()
         return result;
     }
@@ -34,8 +35,8 @@ function Device(db) {
     }
     this.update = async(id, device) => {
         const result = await db
-            .updateMany({ id: id }, {
-                $set: device,
+            .updateMany({ id: toNum(id) }, {
+                $set: safeDoc(device),
                 $currentDate: { lastModified: true }
             }).catch(err => {
                 let error = { error: [] };
@@ -46,7 +47,7 @@ function Device(db) {
         return devicex;
     }
     this.delete = async(id) => {
-        const result = await db.deleteOne({ id: id })
+        const result = await db.deleteOne({ id: toNum(id) })
         return result;
     }
 }

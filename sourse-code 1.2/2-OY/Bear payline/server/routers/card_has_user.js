@@ -5,9 +5,10 @@ var db = require('../SuperDb/main');
 var generateId = require('../resurs/funtion/getid');
 const validate = require("../resurs/validate-sxema/card_has_user");
 var auth = require("../middlewire/auth");
+const { requireAdmin } = auth;
+const { canAccessUser } = require("../resurs/funtion/access");
 
 
-setTimeout(async() => { db = await db }, 100);
 
 router.get("/get/chu/:id", auth, async(req, res) => {
     let id = parseInt(req.params.id);
@@ -18,12 +19,15 @@ router.get("/get/chu/:id", auth, async(req, res) => {
     if (!cardHasUser) {
         return res.status(404).json({ error: 'ushbu idga mos kardga ega foydalanuvchi to\'pilmadi!' });
     }
+    if (!canAccessUser(req.user, cardHasUser.iduser)) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+    }
     res.json(
         cardHasUser
     );
 })
 
-router.get("/get/card/:id", auth, async(req, res) => {
+router.get("/get/card/:id", auth, requireAdmin, async(req, res) => {
     let id = parseInt(req.params.id);
     if (!id) {
         return res.status(400).json({ error: 'id xato berildi, id butun son qiymat bo\'lishi shart' });
@@ -44,6 +48,9 @@ router.get("/get/user/:id", auth, async(req, res) => {
     if (!id) {
         return res.status(400).json({ error: 'id xato berildi, id butun son qiymat bo\'lishi shart' });
     }
+    if (!canAccessUser(req.user, id)) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+    }
     let user = await (await db).user.getUser(id);
     if (!user) {
         return res.status(404).json({ error: 'ushbu idga mos foydalanuvchi to\'pilmadi!' });
@@ -55,7 +62,7 @@ router.get("/get/user/:id", auth, async(req, res) => {
     );
 })
 
-router.get('/get/all', auth, async(req, res) => {
+router.get('/get/all', auth, requireAdmin, async(req, res) => {
     let cardHasUser = await (await db).cardHasUser.getCardHasUserAll();
     res.json(
         cardHasUser
@@ -66,6 +73,9 @@ router.post('/add', auth, async(req, res) => {
     const { error } = validate(req.body, "add");
     if (error) {
         return res.status(400).send(error.details[0].message)
+    }
+    if (!canAccessUser(req.user, req.body.iduser)) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
     }
     req.body.idcard = parseInt(req.body.idcard);
     req.body.iduser = parseInt(req.body.iduser);
@@ -96,7 +106,6 @@ router.post('/add', auth, async(req, res) => {
             result
         );
     }
-    console.log(result);
     res.json(
         cardHasUser
     );
@@ -107,13 +116,13 @@ router.put('/uptade/:id', auth, async(req, res) => {
     if (error) {
         return res.status(400).send(error.details[0].message)
     }
+    let body = req.body;
     if (body.hasOwnProperty("idcard")) {
         req.body.idcard = parseInt(req.body.idcard);
     }
     if (body.hasOwnProperty("iduser")) {
         req.body.iduser = parseInt(req.body.iduser);
     }
-    let body = req.body;
     let id = parseInt(req.params.id);
 
     if (!id) {
@@ -132,9 +141,15 @@ router.put('/uptade/:id', auth, async(req, res) => {
     if (!cardHasUser) {
         return res.status(404).json({ error: 'ushbu idga mos kartaga bog\'liq foydalanuvchi to\'pilmadi!' });
     }
+    if (!canAccessUser(req.user, cardHasUser.iduser)) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+    }
 
     if (body.hasOwnProperty("iduser")) {
         req.body.iduser = parseInt(req.body.iduser);
+        if (!canAccessUser(req.user, req.body.iduser)) {
+            return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+        }
         let user = await (await db).user.getUser(req.body.iduser);
         if (!user) {
             return res.status(404).json({ error: 'ushbu idga mos foydalanuvchi to\'pilmadi!' });
@@ -166,14 +181,17 @@ router.delete('/delete/:id', auth, async(req, res) => {
         return res.status(400).json({ error: 'id xato berildi, id butun son qiymat bo\'lishi shart' });
     }
 
-    let cradHasUser = await (await db).cradHasUser.getCardHasUser(id);
-    if (!cradHasUser) {
+    let cardHasUser = await (await db).cardHasUser.getCardHasUser(id);
+    if (!cardHasUser) {
         return res.status(404).json({ error: 'ushbu idga mos user to\'pilmadi!' });
+    }
+    if (!canAccessUser(req.user, cardHasUser.iduser)) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
     }
 
     let result = await (await db).cardHasUser.delete(id);
     res.json(
-        cradHasUser
+        cardHasUser
     );
 })
 

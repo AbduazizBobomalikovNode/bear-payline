@@ -5,9 +5,18 @@ var db = require('../SuperDb/main');
 var generateId = require('../resurs/funtion/getid');
 const validate = require("../resurs/validate-sxema/card");
 var auth = require("../middlewire/auth");
+const { requireAdmin } = auth;
+const { isAdmin } = require("../resurs/funtion/access");
+
+// Karta ma'lumoti (raqam, cvv) faqat egasiga (card_has_user orqali bog'langan) yoki administratorga ko'rinadi.
+async function ownsCard(req, idcard) {
+    if (isAdmin(req.user)) return true;
+    const links = await (await db).cardHasUser.getCardHasUserForUser(Number(req.user.id));
+    return Array.isArray(links) && links.some((l) => Number(l.idcard) === Number(idcard));
+}
 
 
-setTimeout(async() => { db = await db }, 100);
+
 
 
 router.get("/get/card/:id", auth, async(req, res) => {
@@ -19,12 +28,15 @@ router.get("/get/card/:id", auth, async(req, res) => {
     if (!card) {
         return res.status(404).json({ error: 'ushbu idga mos kard to\'pilmadi!' });
     }
+    if (!(await ownsCard(req, id))) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+    }
     res.json(
         card
     );
 })
 
-router.get('/get/all', auth, async(req, res) => {
+router.get('/get/all', auth, requireAdmin, async(req, res) => {
     let cards = await (await db).card.getCardAll();
     res.json(
         cards
@@ -51,7 +63,6 @@ router.post('/add', auth, async(req, res) => {
             result
         );
     }
-    console.log(result);
     res.json(
         card
     );
@@ -82,6 +93,9 @@ router.put('/uptade/:id', auth, async(req, res) => {
     if (!card) {
         return res.status(404).json({ error: 'ushbu idga mos kard to\'pilmadi!' });
     }
+    if (!(await ownsCard(req, id))) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+    }
 
     let result = await (await db).card.update(id, body);
     if (result.hasOwnProperty('error')) {
@@ -103,6 +117,9 @@ router.delete('/delete/:id', auth, async(req, res) => {
     let card = await (await db).card.getCard(id);
     if (!card) {
         return res.status(404).json({ error: 'ushbu idga mos kard to\'pilmadi!' });
+    }
+    if (!(await ownsCard(req, id))) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
     }
 
     let result = await (await db).card.delete(id);

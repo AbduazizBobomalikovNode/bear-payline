@@ -128,3 +128,21 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# ---- Bear payline: sirlar va yuklangan fayllar ----
+node_modules/
+.env
+.env.*
+!.env.example
+**/keyGoogle/
+*.git.zip
+**/uploads/*
+**/resurs/uploads/*
+logs
+
+# Ma'lumotlar dump'lari va shaxsiy rasmlar (tarixdan tozalanishi kerak)
+**/CloudModule/data/*.sql
+**/sms/img/
+**/server file/uploads/*
+**/file server/uploads/*
+**/JsonModule/data/*.sql

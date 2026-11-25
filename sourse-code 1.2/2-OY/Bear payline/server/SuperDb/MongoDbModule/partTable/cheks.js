@@ -1,8 +1,9 @@
 var searchError = require('../../../resurs/funtion/erors');
+const { toNum, safeDoc, safeFilter } = require('../safe');
 
 function Cheks(db) { //getUserForObj
     this.getCheks = async(id) => {
-        const result = await db.findOne({ id: id }, { projection: { _id: 0 } })
+        const result = await db.findOne({ id: toNum(id) }, { projection: { _id: 0 } })
             .then(resultin => {
                 return resultin;
             })
@@ -10,7 +11,7 @@ function Cheks(db) { //getUserForObj
                 console.error(`tasdiqlash topilmadi: ${err}`)
                 return false;
             });
-        console.log("getCheks ishladi", result, id);
+        
         return result;
     }
     this.addCheks = async(chek) => { //id, full_name, phone, address, email, status, email_status, idcountry, idrole
@@ -24,7 +25,7 @@ function Cheks(db) { //getUserForObj
         return result;
     }
     this.delete = async(id) => {
-        const result = await db.deleteOne({ id: id })
+        const result = await db.deleteOne({ id: toNum(id) })
         return result;
     }
 }

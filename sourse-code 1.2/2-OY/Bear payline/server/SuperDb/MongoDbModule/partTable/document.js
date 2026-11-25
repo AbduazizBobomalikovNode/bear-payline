@@ -1,8 +1,9 @@
 var searchError = require('../../../resurs/funtion/erors');
+const { toNum, safeDoc, safeFilter } = require('../safe');
 // Document
 function Document(db) {
     this.getDocument = async(id) => {
-        const result = await db.findOne({ id: id }, { projection: { _id: 0 } })
+        const result = await db.findOne({ id: toNum(id) }, { projection: { _id: 0 } })
             .then(result => {
                 return result;
             })
@@ -13,7 +14,7 @@ function Document(db) {
         return result;
     }
     this.getDocumentUser = async(id) => { //iduser
-        const result = await db.find({ iduser: id }, { projection: { _id: 0 } })
+        const result = await db.find({ iduser: toNum(id) }, { projection: { _id: 0 } })
             .toArray()
         return result;
     }
@@ -34,8 +35,8 @@ function Document(db) {
     }
     this.update = async(id, document) => {
         const result = await db
-            .updateMany({ id: id }, {
-                $set: document,
+            .updateMany({ id: toNum(id) }, {
+                $set: safeDoc(document),
                 $currentDate: { lastModified: true }
             }).catch(err => {
                 let error = { error: [] };
@@ -46,7 +47,7 @@ function Document(db) {
         return documentx;
     }
     this.delete = async(id) => {
-        const result = await db.deleteOne({ id: id })
+        const result = await db.deleteOne({ id: toNum(id) })
         return result;
     }
 }

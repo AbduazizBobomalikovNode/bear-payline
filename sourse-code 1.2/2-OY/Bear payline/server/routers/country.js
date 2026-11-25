@@ -5,8 +5,9 @@ var db = require('../SuperDb/main');
 var generateId = require('../resurs/funtion/getid');
 const validate = require("../resurs/validate-sxema/country");
 var auth = require("../middlewire/auth");
+const { requireAdmin } = auth;
+const { canAccessUser } = require("../resurs/funtion/access");
 
-setTimeout(async() => { db = await db }, 100);
 
 router.get("/get/country/:id", auth, async(req, res) => {
     let id = parseInt(req.params.id);
@@ -29,10 +30,9 @@ router.get('/get/all', async(req, res) => {
     );
 })
 
-router.post('/add', auth, async(req, res) => {
+router.post('/add', auth, requireAdmin, async(req, res) => {
     if (req.body.hasOwnProperty('commission') && typeof req.body.commission == 'string') {
-        req.body.commission.replaceAll(',', ".");
-        req.body.commission = parseFloat(req.body.commission);
+        req.body.commission = parseFloat(req.body.commission.replaceAll(',', '.'));
     }
     const { error } = validate(req.body, "add");
     if (error) {
@@ -53,22 +53,20 @@ router.post('/add', auth, async(req, res) => {
             result
         );
     }
-    console.log(result);
     res.json(
         country
     );
 })
 
-router.put('/uptade/:id', auth, async(req, res) => {
+router.put('/uptade/:id', auth, requireAdmin, async(req, res) => {
+    let body = req.body;
     if (req.body.hasOwnProperty('commission') && typeof req.body.commission == 'string') {
-        req.body.commission.replaceAll(',', ".");
-        req.body.commission = parseFloat(req.body.commission);
+        req.body.commission = parseFloat(req.body.commission.replaceAll(',', '.'));
     }
     const { error } = validate(req.body);
     if (error) {
         return res.status(400).send(error.details[0].message)
     }
-    let body = req.body;
     let id = parseInt(req.params.id);
 
     if (!id) {
@@ -99,7 +97,7 @@ router.put('/uptade/:id', auth, async(req, res) => {
     );
 })
 
-router.delete('/delete/:id', auth, async(req, res) => {
+router.delete('/delete/:id', auth, requireAdmin, async(req, res) => {
     let id = parseInt(req.params.id);
     if (!id) {
         return res.status(400).json({ error: 'id xato berildi, id butun son qiymat bo\'lishi shart' });

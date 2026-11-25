@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 380" width="920" height="380" role="img" aria-labelledby="t d">
+  <title id="t">Bear payline: API qanday ishlaydi</title>
+  <desc id="d">Mobil ilova SMS kod orqali kiradi va JWT oladi. Har bir so'rov authenticate, litsenziya va egalik tekshiruvidan o'tadi. SuperDb yozuvni MySQL va MongoDB'ga yozadi, o'qish MongoDB'dan. Fayllar alohida fayl serveriga, push xabarlar Expo orqali, chat socket.io orqali ishlaydi.</desc>
+  <style>
+    .card { fill: #ffffff; stroke: #d9dee8; stroke-width: 1.5; }
+    .api { fill: #fff4ec; stroke: #e2743a; stroke-width: 2; }
+    .db { fill: #edf6ff; stroke: #3a7be2; stroke-width: 2; }
+    .h { font: 600 15px 'Segoe UI', Arial, sans-serif; fill: #24293a; }
+    .s { font: 12.5px 'Segoe UI', Arial, sans-serif; fill: #636b82; }
+    .m { font: 12px ui-monospace, Consolas, monospace; fill: #3b4257; }
+    .wire { stroke: #d3d9e5; stroke-width: 2; fill: none; }
+    .flow { stroke: #e2743a; stroke-width: 3; fill: none; stroke-dasharray: 7 11; animation: dash 1.3s linear infinite; }
+    .flow.b { stroke: #3a7be2; }
+    .gate { fill: #e2743a; animation: pulse 2.4s ease-in-out infinite; }
+    .g2 { animation-delay: .5s; } .g3 { animation-delay: 1s; }
+    @keyframes dash { to { stroke-dashoffset: -36; } }
+    @keyframes pulse { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .flow, .gate { animation: none; } .gate { opacity: 1; } }
+  </style>
+  <rect width="920" height="380" rx="14" fill="#f8f9fc"/>
+
+  <rect class="card" x="20" y="40" width="200" height="130" rx="12"/>
+  <text class="h" x="40" y="70">Mobil ilova</text>
+  <text class="m" x="40" y="96">POST /api/auth/login</text>
+  <text class="m" x="40" y="116">POST /api/auth/chek</text>
+  <text class="s" x="40" y="140">SMS kod → JWT (7 kun)</text>
+  <text class="s" x="40" y="158">x-web-token / Bearer</text>
+
+  <rect class="card" x="20" y="210" width="200" height="130" rx="12"/>
+  <text class="h" x="40" y="240">Chat (socket.io)</text>
+  <text class="s" x="40" y="264">handshake'da JWT</text>
+  <text class="s" x="40" y="284">from = token egasi</text>
+  <text class="s" x="40" y="304">har kimga o'z xonasi</text>
+
+  <path class="wire" d="M220 105 H300 M220 275 H300"/>
+  <path class="flow" d="M220 105 H300"/>
+  <path class="flow" d="M220 275 H300"/>
+
+  <rect class="api" x="300" y="30" width="300" height="320" rx="14"/>
+  <text class="h" x="320" y="60">Express API (helmet, CORS)</text>
+  <circle class="gate" cx="328" cy="90" r="5"/>
+  <text class="s" x="342" y="94">authenticate: HS256, muddat, rate limit</text>
+  <circle class="gate g2" cx="328" cy="116" r="5"/>
+  <text class="s" x="342" y="120">licence: /api/&lt;resurs&gt;/&lt;amal&gt;</text>
+  <circle class="gate g3" cx="328" cy="142" r="5"/>
+  <text class="s" x="342" y="146">egalik tekshiruvi, requireAdmin</text>
+  <text class="m" x="320" y="184">card  chu  country  device</text>
+  <text class="m" x="320" y="204">document  news  partner</text>
+  <text class="m" x="320" y="224">payments  role  user  auth</text>
+  <text class="s" x="320" y="256">Joi validatsiya · async xatolar ushlanadi</text>
+  <text class="s" x="320" y="278">/send-push → Expo (faqat admin)</text>
+  <text class="s" x="320" y="300">fayllar → fayl serveri (5 MB)</text>
+  <text class="s" x="320" y="322">HOST_FILE_SERVER, SSRF yo'q</text>
+
+  <path class="wire" d="M600 110 H680 M600 250 H680"/>
+  <path class="flow b" d="M600 110 H680"/>
+  <path class="flow b" d="M600 250 H680"/>
+
+  <rect class="db" x="680" y="40" width="220" height="150" rx="12"/>
+  <text class="h" x="700" y="70">SuperDb</text>
+  <text class="s" x="700" y="94">yozish: MySQL + MongoDB</text>
+  <text class="s" x="700" y="114">o'qish: MongoDB</text>
+  <text class="m" x="700" y="140">MySQL: ? / ?? parametrlar</text>
+  <text class="m" x="700" y="160">Mongo: safeDoc, toNum</text>
+  <text class="s" x="700" y="180">schema.sql — 10 jadval</text>
+
+  <rect class="db" x="680" y="210" width="220" height="130" rx="12"/>
+  <text class="h" x="700" y="240">CloudModule</text>
+  <text class="s" x="700" y="264">mysqldump → Google Drive</text>
+  <text class="s" x="700" y="284">GOOGLE_APPLICATION_</text>
+  <text class="s" x="700" y="302">CREDENTIALS (fayl yo'li)</text>
+  <text class="s" x="700" y="324">kalit repoda saqlanmaydi</text>
+</svg>

@@ -5,8 +5,9 @@ var db = require('../SuperDb/main');
 var generateId = require('../resurs/funtion/getid');
 const validate = require("../resurs/validate-sxema/payments");
 var auth = require("../middlewire/auth");
+const { requireAdmin } = auth;
+const { canAccessUser } = require("../resurs/funtion/access");
 
-setTimeout(async() => { db = await db }, 100);
 
 router.get('/get/payments/:id', auth, async(req, res) => {
     let id = parseInt(req.params.id);
@@ -29,6 +30,9 @@ router.get('/get/user/:id', auth, async(req, res) => {
     if (!id) {
         return res.status(400).json({ error: 'id xato berildi, id butun son qiymat bo\'lishi shart' });
     }
+    if (!canAccessUser(req.user, id)) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+    }
     let user = await (await db).user.getUser(id);
     if (!user) {
         return res.status(404).json({ error: 'ushbu idga mos foydalanuvchi to\'pilmadi!' });
@@ -40,7 +44,7 @@ router.get('/get/user/:id', auth, async(req, res) => {
     );
 })
 
-router.get('/get/all', auth, async(req, res) => {
+router.get('/get/all', auth, requireAdmin, async(req, res) => {
     let result = await (await db).payments.getPaymentsAll();
 
     res.json(
@@ -50,17 +54,18 @@ router.get('/get/all', auth, async(req, res) => {
 
 router.post('/add', auth, async(req, res) => {
     if (req.body.hasOwnProperty('amout') && typeof req.body.amout == 'string') {
-        req.body.amout.replaceAll(',', ".");
-        req.body.amout = parseFloat(req.body.amout);
+        req.body.amout = parseFloat(req.body.amout.replaceAll(',', '.'));
     }
     if (req.body.hasOwnProperty('commission') && typeof req.body.commission == 'string') {
-        req.body.commission.replaceAll(',', ".");
-        req.body.commission = parseFloat(req.body.commission);
+        req.body.commission = parseFloat(req.body.commission.replaceAll(',', '.'));
     }
     req.body.iduser = parseInt(req.body.iduser);
     const { error } = validate(req.body, "add");
     if (error) {
         return res.status(400).send(error.details[0].message)
+    }
+    if (!canAccessUser(req.user, req.body.iduser)) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
     }
     let body = req.body;
     let payments = {
@@ -75,36 +80,32 @@ router.post('/add', auth, async(req, res) => {
     // user.status = -1;
 
     let result = await (await db).payments.addPayments(payments);
-    console.log(result);
     if (result.hasOwnProperty('error')) {
         return res.status(400).json(
             result
         );
     }
-    console.log(result);
     res.json(
         payments
     );
 })
 
-router.put('/uptade/:id', auth, async(req, res) => {
+router.put('/uptade/:id', auth, requireAdmin, async(req, res) => {
     const { error } = validate(req.body);
     if (error) {
         return res.status(400).send(error.details[0].message)
     }
+    let body = req.body;
     if (req.body.hasOwnProperty('amout') && typeof req.body.amout == 'string') {
-        req.body.amout.replaceAll(',', ".");
-        req.body.amout = parseFloat(req.body.amout);
+        req.body.amout = parseFloat(req.body.amout.replaceAll(',', '.'));
     }
     if (req.body.hasOwnProperty('commission') && typeof req.body.commission == 'string') {
-        req.body.commission.replaceAll(',', ".");
-        req.body.commission = parseFloat(req.body.commission);
+        req.body.commission = parseFloat(req.body.commission.replaceAll(',', '.'));
     }
     if (body.hasOwnProperty("iduser")) {
         req.body.iduser = parseInt(req.body.iduser);
     }
 
-    let body = req.body;
     let id = parseInt(req.params.id);
 
     if (!id) {
@@ -122,6 +123,9 @@ router.put('/uptade/:id', auth, async(req, res) => {
     let payments = await (await db).payments.getPayments(id);
     if (!payments) {
         return res.status(404).json({ error: 'ushbu idga mos to\'lov to\'pilmadi!' });
+    }
+    if (!canAccessUser(req.user, payments.iduser)) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
     }
 
     if (body.hasOwnProperty("iduser")) {
@@ -142,7 +146,7 @@ router.put('/uptade/:id', auth, async(req, res) => {
     );
 })
 
-router.delete('/delete/:id', auth, async(req, res) => {
+router.delete('/delete/:id', auth, requireAdmin, async(req, res) => {
     let id = parseInt(req.params.id);
     if (!id) {
         return res.status(400).json({ error: 'id xato berildi, id butun son qiymat bo\'lishi shart' });
@@ -151,6 +155,9 @@ router.delete('/delete/:id', auth, async(req, res) => {
     let payments = await (await db).payments.getPayments(id);
     if (!payments) {
         return res.status(404).json({ error: 'ushbu idga mos to\'lov to\'pilmadi!' });
+    }
+    if (!canAccessUser(req.user, payments.iduser)) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
     }
 
     let result = await (await db).payments.delete(id);

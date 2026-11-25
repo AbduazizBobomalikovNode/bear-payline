@@ -1,7 +1,7 @@
 const express = require('express');
 const Auth = express.Router();
 const jwt = require('jsonwebtoken');
-const jwt_my_key = "***REMOVED***";
+const jwt_my_key = process.env.JWT_SECRET;
 var db = require('../SuperDb/main');
 var generateId = require('../resurs/funtion/getid');
 
@@ -141,14 +141,14 @@ async function searchCountryCodes(phone) {
 
 async function postLogin() {
     try {
-        const response = await fetch('https://notify.eskiz.uz/api/auth/login', {
+        const response = await fetch(process.env.SMS_URL + '/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                email: '***REMOVED***',
-                password: '***REMOVED***'
+                email: process.env.SMS_LOGIN,
+                password: process.env.SMS_PASSWORD
             })
         });
         const result = await response.json();
@@ -163,7 +163,7 @@ async function sendSMSCode(phone, code) {
     try {
         let token = await postLogin();
         console.log(token);
-        const response = await fetch('https://notify.eskiz.uz/api/message/sms/send', {
+        const response = await fetch(process.env.SMS_URL + '/message/sms/send', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

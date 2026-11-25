@@ -1,8 +1,9 @@
 var searchError = require('../../../resurs/funtion/erors');
+const { toNum, safeDoc, safeFilter } = require('../safe');
 
 function Card_has_user(db) {
     this.getCardHasUser = async(id) => {
-        const result = await db.findOne({ id: id }, { projection: { _id: 0 } })
+        const result = await db.findOne({ id: toNum(id) }, { projection: { _id: 0 } })
             .then(result => {
                 return result;
             })
@@ -13,12 +14,12 @@ function Card_has_user(db) {
         return result;
     }
     this.getCardHasUserForCard = async(id) => { //idcard
-        const result = await db.find({ idcard: id }, { projection: { _id: 0 } })
+        const result = await db.find({ idcard: toNum(id) }, { projection: { _id: 0 } })
             .sort({ idcard: 1 }).toArray()
         return result;
     }
     this.getCardHasUserForUser = async(id) => { //iduser
-        const result = await db.find({ iduser: id }, { projection: { _id: 0 } })
+        const result = await db.find({ iduser: toNum(id) }, { projection: { _id: 0 } })
             .sort({ iduser: 1 }).toArray()
         return result;
     }
@@ -39,8 +40,8 @@ function Card_has_user(db) {
     }
     this.update = async(id, card) => {
         const result = await db
-            .updateMany({ id: id }, {
-                $set: card,
+            .updateMany({ id: toNum(id) }, {
+                $set: safeDoc(card),
                 $currentDate: { lastModified: true }
             }).catch(err => {
                 let error = { error: [] };
@@ -51,7 +52,7 @@ function Card_has_user(db) {
         return cardx;
     }
     this.delete = async(id) => {
-        const result = await db.deleteOne({ id: id })
+        const result = await db.deleteOne({ id: toNum(id) })
         return result;
     }
 }

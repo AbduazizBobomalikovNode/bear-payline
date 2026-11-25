@@ -1,8 +1,9 @@
 var searchError = require('../../../resurs/funtion/erors');
+const { toNum, safeDoc, safeFilter } = require('../safe');
 
 function News(db) {
     this.getNews = async(id) => {
-        const result = await db.findOne({ id: id }, { projection: { _id: 0 } })
+        const result = await db.findOne({ id: toNum(id) }, { projection: { _id: 0 } })
             .then(result => {
                 return result;
             })
@@ -29,8 +30,8 @@ function News(db) {
     }
     this.update = async(id, news) => {
         const result = await db
-            .updateMany({ id: id }, {
-                $set: news,
+            .updateMany({ id: toNum(id) }, {
+                $set: safeDoc(news),
                 $currentDate: { lastModified: true }
             }).catch(err => {
                 let error = { error: [] };
@@ -41,7 +42,7 @@ function News(db) {
         return newsx;
     }
     this.delete = async(id) => {
-        const result = await db.deleteOne({ id: id });
+        const result = await db.deleteOne({ id: toNum(id) });
         return result;
     }
 }

@@ -12,30 +12,24 @@ const device = require('./partTable/device');
 const document = require('./partTable/document');
 const message = require('./partTable/message');
 
-var con = mysql.createConnection({
-    host: "localhost",
-    user: "admin",
-    password: "@dm1nb1ll1@rd$r##m",
-    database: "bear"
+// Ulanish sozlamalari muhit o'zgaruvchilaridan olinadi (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE).
+// Pool ulanish uzilganda o'zi qayta ulanadi, shuning uchun keep-alive setInterval kerak emas.
+var con = mysql.createPool({
+    connectionLimit: 10,
+    host: process.env.MYSQL_HOST,
+    port: parseInt(process.env.MYSQL_PORT, 10) || 3306,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE
 });
-
-// var con = mysql.createConnection({
-//     host: "us-cdbr-east-06.cleardb.net",
-//     user: "b397bf2fb21fb5",
-//     password: "***REMOVED***",
-//     database: "heroku_48fdb3a46606ce3"
-// });
 
 class Db {
     constructor() {
         this.buffer = (async function() {
-            con.connect(function(err) {
-                if (err) throw err;
-                console.log("Connected!");
-                setInterval(function() {
-                    con.query('SELECT 1');
-                }, 5000);
+            await new Promise((resolve, reject) => {
+                con.query('SELECT 1', (err) => (err ? reject(err) : resolve()));
             });
+            console.log("MySQL ga ulandi");
             return {
                 user: new user(con),
                 news: new news(con),
@@ -49,7 +43,7 @@ class Db {
                 document: new document(con),
                 message: new message(con),
                 close: function() {
-                    con.end();
+                    con.end(() => {});
                 }
             }
         })();

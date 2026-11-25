@@ -6,14 +6,14 @@ const app = express();
 
 async function postLogin() {
     try {
-        const response = await fetch('https://notify.eskiz.uz/api/auth/login', {
+        const response = await fetch(process.env.SMS_URL + '/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                email: '***REMOVED***',
-                password: '***REMOVED***'
+                email: process.env.SMS_LOGIN,
+                password: process.env.SMS_PASSWORD
             })
         });
         const result = await response.json();
@@ -26,14 +26,14 @@ async function postLogin() {
 }
 async function sendSMSCode(token) {
     try {
-        const response = await fetch('https://notify.eskiz.uz/api/message/sms/send-global', {
+        const response = await fetch(process.env.SMS_URL + '/message/sms/send-global', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                mobile_phone: '789994246982',
+                mobile_phone: process.env.SMS_TEST_PHONE,
                 message: 'salom 15478',
                 from: '4546'
             })
@@ -48,7 +48,7 @@ async function sendSMSCode(token) {
 }
 async function reLogin(token) {
     try {
-        const response = await fetch('https://notify.eskiz.uz/api/auth/refresh', {
+        const response = await fetch(process.env.SMS_URL + '/auth/refresh', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

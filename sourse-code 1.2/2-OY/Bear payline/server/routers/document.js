@@ -1,13 +1,10 @@
 const express = require("express");
-const multer = require('multer');
-const axios = require('axios').default;
-const fs = require('fs');
-const FormData = require('form-data');
-const upload = multer({ dest: 'resurs/uploads/' });
+const { upload, sendFile, removeRemote, discard } = require('../resurs/funtion/fileClient');
 var auth = require("../middlewire/auth");
+const { requireAdmin } = auth;
+const { canAccessUser } = require("../resurs/funtion/access");
 
 
-const fileUrl = process.env.HOST_FILE_SERVER ? process.env.HOST_FILE_SERVER : 'https://bear-payline-file-server-f81c965e266f.herokuapp.com'; // the URL of the other server
 const router = express.Router();
 
 var db = require('../SuperDb/main');
@@ -15,7 +12,6 @@ var generateId = require('../resurs/funtion/getid');
 const validate = require("../resurs/validate-sxema/document");
 
 
-setTimeout(async() => { db = await db }, 100);
 
 router.get("/get/document/:id", auth, async(req, res) => {
     let id = parseInt(req.params.id);
@@ -26,6 +22,9 @@ router.get("/get/document/:id", auth, async(req, res) => {
     if (!document) {
         return res.status(404).json({ error: 'ushbu idga mos hujat  to\'pilmadi!' });
     }
+    if (!canAccessUser(req.user, document.iduser)) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+    }
     res.json(
         document
     );
@@ -35,6 +34,9 @@ router.get("/get/user/:id", auth, async(req, res) => {
     let id = parseInt(req.params.id);
     if (!id) {
         return res.status(400).json({ error: 'id xato berildi, id butun son qiymat bo\'lishi shart' });
+    }
+    if (!canAccessUser(req.user, id)) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
     }
     let user = await (await db).user.getUser(id);
     if (!user) {
@@ -47,7 +49,7 @@ router.get("/get/user/:id", auth, async(req, res) => {
     );
 })
 
-router.get('/get/all', auth, async(req, res) => {
+router.get('/get/all', auth, requireAdmin, async(req, res) => {
     let documents = await (await db).document.getDocumentAll();
     res.json(
         documents
@@ -55,54 +57,38 @@ router.get('/get/all', auth, async(req, res) => {
 })
 
 router.post('/add', auth, upload.single('document'), async(req, res) => {
+    const file = req.file;
     const { error } = validate(req.body, "add");
     if (error) {
+        discard(file);
         return res.status(400).send(error.details[0].message)
     }
-    const file = req.file;
-    req.body.iduser = parseInt(req.body.iduser);
     if (!file) {
-        res.status(400).json({ error: 'hujaatni yuklashda xatolik, hech qanday hujat yuborilmagan.' });
+        return res.status(400).json({ error: 'hujaatni yuklashda xatolik, hech qanday hujat yuborilmagan.' });
     }
+    if (!canAccessUser(req.user, req.body.iduser)) {
+        discard(file);
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+    }
+    req.body.iduser = parseInt(req.body.iduser);
     let body = req.body;
     let document = {
         id: generateId(),
-        ...body,
-        img_url: file.path
+        ...body
     };
 
     let user = await (await db).user.getUser(req.body.iduser);
     if (!user) {
-        console.log(req.body);
-        if (file) {
-            fs.unlinkSync(file.path);
-        }
+        discard(file);
         return res.status(404).json({ error: 'ushbu idga mos foydalanuvchi to\'pilmadi!' });
     }
 
-    const form = new FormData();
-    form.append('file', fs.createReadStream(file.path), {
-        filename: file.originalname,
-        contentType: file.mimetype,
-    });
     try {
-        const response = await axios.post(fileUrl + "/uploadfile", form, {
-            headers: {
-                ...form.getHeaders(),
-            },
-        });
-
-        fs.unlinkSync(file.path); // delete the file from the 'uploads' directory
-
-        let url_doc = fileUrl + '/images/' + response.data.filename;
-        document.img_url = url_doc;
-        console.log(response.data, url_doc);
+        document.img_url = await sendFile(file);
     } catch (error) {
-        console.error(error);
-        // res.status(500).send('An error occurred.');
+        console.error('Fayl yuklashda xatolik:', error.message);
         return res.status(500).json({ error: 'hujaatni yuklashda xatolik, qaytadan urinib ko\'ring' });
     }
-
 
     let result = await (await db).document.addDocument(document);
     if (result.hasOwnProperty('error')) {
@@ -110,105 +96,67 @@ router.post('/add', auth, upload.single('document'), async(req, res) => {
             result
         );
     }
-    console.log(result);
     res.json(
         document
     );
 })
 
-
-
 router.put('/uptade/:id', auth, upload.single('document'), async(req, res) => {
+    const file = req.file;
     const { error } = validate(req.body);
     if (error) {
+        discard(file);
         return res.status(400).send(error.details[0].message)
     }
-    const file = req.file;
+    let body = { ...req.body };
     if (body.hasOwnProperty("iduser")) {
-        req.body.iduser = parseInt(req.body.iduser);
+        body.iduser = parseInt(body.iduser);
     }
-
-    let body = {
-        ...req.body,
-        img_url: "sfdfsdv"
-    };
-
     let id = parseInt(req.params.id);
 
     if (!id) {
+        discard(file);
         return res.status(400).json({ error: 'id xato berildi, id butun son qiymat bo\'lishi shart' });
     }
 
-    if (!body) {
-        return res.status(400).json({ error: 'no\'tog\'ri so\'rov. bosh qiymat yuborilgan.' });
-    }
-
     if (body.hasOwnProperty("id")) {
+        discard(file);
         return res.status(400).json({ error: 'id qiymatini o\'zgartirib bo\'lmaydi.' });
     }
 
     let document = await (await db).document.getDocument(id);
     if (!document) {
+        discard(file);
         return res.status(404).json({ error: 'ushbu idga mos hujjat to\'pilmadi!' });
+    }
+    if (!canAccessUser(req.user, document.iduser)) {
+        discard(file);
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
     }
 
     if (body.hasOwnProperty("iduser")) {
-        let user = await (await db).user.getUser(req.body.iduser);
+        if (!canAccessUser(req.user, body.iduser)) {
+            discard(file);
+            return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+        }
+        let user = await (await db).user.getUser(body.iduser);
         if (!user) {
+            discard(file);
             return res.status(404).json({ error: 'ushbu idga mos foydalanuvchi to\'pilmadi!' });
         }
     }
     if (file) {
-        const form = new FormData();
-        form.append('file', fs.createReadStream(file.path), {
-            filename: file.originalname,
-            contentType: file.mimetype,
-        });
         try {
-            let deleteUrl = "./uploads/" + document.img_url.replaceAll(fileUrl + "/images/", "");
-            console.log(deleteUrl);
-            let options = {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'filename': deleteUrl
-                }
-            };
-            const deleteFile = await fetch(fileUrl + "/file", options)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Tarmoq javobi yaxshi emas edi');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // if (data.hasOwnProperty("error")) {
-                    //     throw new Error('Tarmoq javobi yaxshi emas edi');
-                    // }
-                    return data;
-                });
-
-            if (deleteFile.status == 200) {
-                const response = await axios.post(fileUrl + "/uploads", form, {
-                    headers: {
-                        ...form.getHeaders(),
-                    },
-                });
-
-                fs.unlinkSync(file.path); // delete the file from the 'uploads' directory
-
-                let url_doc = 'http://localhost:3003/images/' + response.data.filename;
-                body.img_url = url_doc;
-                console.log(response.data, url_doc);
-            } else {
-                fs.unlinkSync(file.path);
-                return res.status(500).json({ error: 'serverda xatolik yuz berdi, qaytatdan urinib ko\'ring.' });
+            const newUrl = await sendFile(file);
+            try {
+                await removeRemote(document.img_url);
+            } catch (e) {
+                console.error('Eski faylni o\'chirishda xatolik:', e.message);
             }
-
+            body.img_url = newUrl;
         } catch (error) {
-            console.error(error);
-            // res.status(500).send('An error occurred.');
-            res.status(500).json({ error: 'hujaatni yuklashda xatolik, qaytadan urinib ko\'ring' });
+            console.error('Fayl yuklashda xatolik:', error.message);
+            return res.status(500).json({ error: 'hujaatni yuklashda xatolik, qaytadan urinib ko\'ring' });
         }
     }
     let result = await (await db).document.update(id, body);
@@ -232,33 +180,13 @@ router.delete('/delete/:id', auth, async(req, res) => {
     if (!document) {
         return res.status(404).json({ error: 'ushbu idga mos hujjat to\'pilmadi!' });
     }
+    if (!canAccessUser(req.user, document.iduser)) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+    }
     try {
-        let deleteUrl = "./uploads/" + document.img_url.replaceAll(fileUrl + "/images/", "");
-        console.log(deleteUrl);
-        let options = {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'filename': deleteUrl
-            }
-        };
-        const deleteFile = await fetch(fileUrl + "/file", options)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Tarmoq javobi yaxshi emas edi');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // if (data.hasOwnProperty("error")) {
-                //     throw new Error('Tarmoq javobi yaxshi emas edi');
-                // }
-                return data;
-            });
-        console.log(deleteFile);
-
+        await removeRemote(document.img_url);
     } catch (error) {
-        console.log(error);
+        console.error('Faylni o\'chirishda xatolik:', error.message);
         return res.status(500).json({ error: 'serverda xatolik yuz berdi, qaytatdan urinib ko\'ring.' });
     }
     let result = await (await db).document.delete(id);

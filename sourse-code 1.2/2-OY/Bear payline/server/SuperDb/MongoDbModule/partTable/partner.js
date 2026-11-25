@@ -1,8 +1,9 @@
 var searchError = require('../../../resurs/funtion/erors');
+const { toNum, safeDoc, safeFilter } = require('../safe');
 
 function Partner(db) {
     this.getPartner = async(id) => {
-        const result = await db.findOne({ id: id }, { projection: { _id: 0 } })
+        const result = await db.findOne({ id: toNum(id) }, { projection: { _id: 0 } })
             .then(result => {
                 return result;
             })
@@ -13,7 +14,7 @@ function Partner(db) {
         return result;
     }
     this.getPartnerUser = async(id) => { //iduser
-        const result = await db.find({ iduser: id }, { projection: { _id: 0 } })
+        const result = await db.find({ iduser: toNum(id) }, { projection: { _id: 0 } })
             .sort({ name: 1 }).toArray()
         return result;
     }
@@ -34,8 +35,8 @@ function Partner(db) {
     }
     this.update = async(id, partner) => {
         const result = await db
-            .updateMany({ id: id }, {
-                $set: partner,
+            .updateMany({ id: toNum(id) }, {
+                $set: safeDoc(partner),
                 $currentDate: { lastModified: true }
             }).catch(err => {
                 let error = { error: [] };
@@ -46,7 +47,7 @@ function Partner(db) {
         return partnerx;
     }
     this.delete = async(id) => {
-        const result = await db.deleteOne({ id: id })
+        const result = await db.deleteOne({ id: toNum(id) })
         return result;
     }
 }

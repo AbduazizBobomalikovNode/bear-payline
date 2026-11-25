@@ -12,10 +12,10 @@ const device = require('./partTable/device');
 const document = require('./partTable/document');
 
 var con = mysql.createConnection({
-    host: "us-cdbr-east-06.cleardb.net",
-    user: "b397bf2fb21fb5",
-    password: "***REMOVED***",
-    database: "heroku_48fdb3a46606ce3"
+    host: process.env.MYSQL_HOST,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE
 });
 //mysql: 
 //b397bf2fb21fb5:***REMOVED***@us-cdbr-east-06.cleardb.net/heroku_48fdb3a46606ce3?reconnect=true

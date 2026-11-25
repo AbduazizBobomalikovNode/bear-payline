@@ -1,8 +1,9 @@
 var searchError = require('../../../resurs/funtion/erors');
+const { toNum, safeDoc, safeFilter } = require('../safe');
 
 function Country(db) { //getCountryForObj
     this.getCountryForObj = async(obj) => {
-        const result = await db.findOne(obj, { projection: { _id: 0 } })
+        const result = await db.findOne(safeFilter(obj), { projection: { _id: 0 } })
             .then(result => {
                 return result;
             })
@@ -13,7 +14,7 @@ function Country(db) { //getCountryForObj
         return result;
     }
     this.getCountry = async(id) => {
-        const result = await db.findOne({ id: id }, { projection: { _id: 0 } })
+        const result = await db.findOne({ id: toNum(id) }, { projection: { _id: 0 } })
             .then(result => {
                 return result;
             })
@@ -40,8 +41,8 @@ function Country(db) { //getCountryForObj
     }
     this.update = async(id, country) => {
         const result = await db
-            .updateMany({ id: id }, {
-                $set: country,
+            .updateMany({ id: toNum(id) }, {
+                $set: safeDoc(country),
                 $currentDate: { lastModified: true }
             }).catch(err => {
                 let error = { error: [] };
@@ -52,7 +53,7 @@ function Country(db) { //getCountryForObj
         return countryx;
     }
     this.delete = async(id) => {
-        const result = await db.deleteOne({ id: id })
+        const result = await db.deleteOne({ id: toNum(id) })
         return result;
     }
 }

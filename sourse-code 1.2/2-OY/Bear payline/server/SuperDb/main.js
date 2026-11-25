@@ -2,6 +2,11 @@ var MongoDb = require('./MongoDbModule/main');
 var SqlDb = require('./MySqlModule/main');
 var CloudData = require('./CloudModule/main');
 
+// SQL qatlami { error } obyekt qaytarsa - xatolik (null/false bo'lsa ham yiqilmaydi)
+function hasError(r) {
+    return !!r && typeof r === 'object' && Object.prototype.hasOwnProperty.call(r, 'error');
+}
+
 
 class Db {
     constructor() {
@@ -38,21 +43,21 @@ class Db {
                     },
                     addMessage: async function(adddata) {
                         let result = await SqlDb.message.addMessage(adddata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.message.addMessage(adddata);
                     },
                     update: async function(id, updatedata) {
                         let result = await SqlDb.message.update(id, updatedata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.message.update(id, updatedata);
                     },
                     delete: async function(id) {
-                        SqlDb.message.delete(id);
-                        if (result.hasOwnProperty('error')) {
+                        let result = await SqlDb.message.delete(id);
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.message.delete(id);
@@ -81,21 +86,21 @@ class Db {
                     },
                     addUser: async function(adddata) {
                         let result = await SqlDb.user.addUser(adddata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.user.addUser(adddata);
                     },
                     update: async function(id, updatedata) {
                         let result = await SqlDb.user.update(id, updatedata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.user.update(id, updatedata);
                     },
                     delete: async function(id) {
-                        let result = SqlDb.user.delete(id);
-                        if (result.hasOwnProperty('error')) {
+                        let result = await SqlDb.user.delete(id);
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.user.delete(id);
@@ -112,21 +117,21 @@ class Db {
                     },
                     addNews: async function(adddata) {
                         let result = await SqlDb.news.addNews(adddata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.news.addNews(adddata);
                     },
                     update: async function(id, updatedata) {
                         let result = await SqlDb.news.update(id, updatedata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.news.update(id, updatedata);
                     },
                     delete: async function(id) {
-                        let result = SqlDb.news.delete(id);
-                        if (result.hasOwnProperty('error')) {
+                        let result = await SqlDb.news.delete(id);
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.news.delete(id);
@@ -147,21 +152,21 @@ class Db {
                     },
                     addCountry: async function(adddata) {
                         let result = await SqlDb.country.addCountry(adddata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.country.addCountry(adddata);
                     },
                     update: async function(id, updatedata) {
                         let result = await SqlDb.country.update(id, updatedata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.country.update(id, updatedata);
                     },
                     delete: async function(id) {
-                        let result = SqlDb.country.delete(id);
-                        if (result.hasOwnProperty('error')) {
+                        let result = await SqlDb.country.delete(id);
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.country.delete(id);
@@ -182,22 +187,21 @@ class Db {
                     },
                     addPayments: async function(adddata) {
                         let result = await SqlDb.payments.addPayments(adddata);
-                        // console.log(result, typeof result, result);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.payments.addPayments(adddata);
                     },
                     update: async function(id, updatedata) {
                         let result = await SqlDb.payments.update(id, updatedata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.payments.update(id, updatedata);
                     },
                     delete: async function(id) {
-                        let result = SqlDb.payments.delete(id);
-                        if (result.hasOwnProperty('error')) {
+                        let result = await SqlDb.payments.delete(id);
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.payments.delete(id);
@@ -214,21 +218,21 @@ class Db {
                     },
                     addCard: async function(adddata) {
                         let result = await SqlDb.card.addCard(adddata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.card.addCard(adddata);
                     },
                     update: async function(id, updatedata) {
                         let result = await SqlDb.card.update(id, updatedata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.card.update(id, updatedata);
                     },
                     delete: async function(id) {
-                        let result = SqlDb.card.delete(id);
-                        if (result.hasOwnProperty('error')) {
+                        let result = await SqlDb.card.delete(id);
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.card.delete(id);
@@ -253,21 +257,21 @@ class Db {
                     },
                     addCardHasUser: async function(adddata) {
                         let result = await SqlDb.cardHasUser.addCardHasUser(adddata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.cardHasUser.addCardHasUser(adddata);
                     },
                     update: async function(id, updatedata) {
                         let result = await SqlDb.cardHasUser.update(id, updatedata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.cardHasUser.update(id, updatedata);
                     },
                     delete: async function(id) {
-                        let result = SqlDb.cardHasUser.delete(id);
-                        if (result.hasOwnProperty('error')) {
+                        let result = await SqlDb.cardHasUser.delete(id);
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.cardHasUser.delete(id);
@@ -288,21 +292,21 @@ class Db {
                     },
                     addPartner: async function(adddata) {
                         let result = await SqlDb.partner.addPartner(adddata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.partner.addPartner(adddata);
                     },
                     update: async function(id, updatedata) {
                         let result = await SqlDb.partner.update(id, updatedata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.partner.update(id, updatedata);
                     },
                     delete: async function(id) {
-                        let result = SqlDb.partner.delete(id);
-                        if (result.hasOwnProperty('error')) {
+                        let result = await SqlDb.partner.delete(id);
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.partner.delete(id);
@@ -323,21 +327,21 @@ class Db {
                     },
                     addRole: async function(adddata) {
                         let result = await SqlDb.role.addRole(adddata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.role.addRole(adddata);
                     },
                     update: async function(id, updatedata) {
                         let result = await SqlDb.role.update(id, updatedata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.role.update(id, updatedata);
                     },
                     delete: async function(id) {
-                        let result = SqlDb.role.delete(id);
-                        if (result.hasOwnProperty('error')) {
+                        let result = await SqlDb.role.delete(id);
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.role.delete(id);
@@ -358,21 +362,21 @@ class Db {
                     },
                     addDevice: async function(adddata) {
                         let result = await SqlDb.device.addDevice(adddata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.device.addDevice(adddata);
                     },
                     update: async function(id, updatedata) {
                         let result = await SqlDb.device.update(id, updatedata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.device.update(id, updatedata);
                     },
                     delete: async function(id) {
-                        let result = SqlDb.device.delete(id);
-                        if (result.hasOwnProperty('error')) {
+                        let result = await SqlDb.device.delete(id);
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.device.delete(id);
@@ -393,21 +397,21 @@ class Db {
                     },
                     addDocument: async function(adddata) {
                         let result = await SqlDb.document.addDocument(adddata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.document.addDocument(adddata);
                     },
                     update: async function(id, updatedata) {
                         let result = await SqlDb.document.update(id, updatedata);
-                        if (result.hasOwnProperty('error')) {
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.document.update(id, updatedata);
                     },
                     delete: async function(id) {
-                        let result = SqlDb.document.delete(id);
-                        if (result.hasOwnProperty('error')) {
+                        let result = await SqlDb.document.delete(id);
+                        if (hasError(result)) {
                             return result;
                         }
                         return await MongoDb.document.delete(id);

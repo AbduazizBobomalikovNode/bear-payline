@@ -5,9 +5,10 @@ var generateId = require('../resurs/funtion/getid');
 const validate = require("../resurs/validate-sxema/role");
 
 var auth = require("../middlewire/auth");
+const { requireAdmin } = auth;
+const { canAccessUser } = require("../resurs/funtion/access");
 
 
-setTimeout(async() => { db = await db }, 100);
 
 
 router.get("/get/role/:id", auth, async(req, res) => {
@@ -31,7 +32,7 @@ router.get('/get/all', auth, async(req, res) => {
     );
 })
 
-router.post('/add', auth, async(req, res) => {
+router.post('/add', auth, requireAdmin, async(req, res) => {
     const { error } = validate(req.body, "add");
     if (error) {
         return res.status(400).send(error.details[0].message)
@@ -51,14 +52,13 @@ router.post('/add', auth, async(req, res) => {
             result
         );
     }
-    console.log(result);
     res.json(
         role
     );
 })
 
 
-router.put('/uptade/:id', auth, async(req, res) => {
+router.put('/uptade/:id', auth, requireAdmin, async(req, res) => {
     const { error } = validate(req.body);
     if (error) {
         return res.status(400).send(error.details[0].message)
@@ -96,7 +96,7 @@ router.put('/uptade/:id', auth, async(req, res) => {
     );
 })
 
-router.delete('/delete/:id', auth, async(req, res) => {
+router.delete('/delete/:id', auth, requireAdmin, async(req, res) => {
     let id = parseInt(req.params.id);
     if (!id) {
         return res.status(400).json({ error: 'id xato berildi, id butun son qiymat bo\'lishi shart' });

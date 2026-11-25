@@ -1,8 +1,9 @@
 var searchError = require('../../../resurs/funtion/erors');
+const { toNum, safeDoc, safeFilter } = require('../safe');
 
 function Message(db) {
     this.getMessage = async(id) => {
-        const result = await db.findOne({ id: id }, { projection: { _id: 0 } })
+        const result = await db.findOne({ id: toNum(id) }, { projection: { _id: 0 } })
             .then(resultin => {
                 return resultin;
             })
@@ -19,12 +20,12 @@ function Message(db) {
         return result;
     }
     this.getMessageForTo = async(id) => {
-        const result = await db.find({ to_user: id }, { projection: { _id: 0 } })
+        const result = await db.find({ to_user: toNum(id) }, { projection: { _id: 0 } })
             .sort({ date: 1 }).toArray()
         return result;
     }
     this.getMessageForFrom = async(id) => {
-        const result = await db.find({ from_user: id }, { projection: { _id: 0 } })
+        const result = await db.find({ from_user: toNum(id) }, { projection: { _id: 0 } })
             .sort({ date: 1 }).toArray()
         return result;
     }
@@ -48,8 +49,8 @@ function Message(db) {
     }
     this.update = async(id, message) => {
         const result = await db
-            .updateMany({ id: id }, {
-                $set: message,
+            .updateMany({ id: toNum(id) }, {
+                $set: safeDoc(message),
                 $currentDate: { lastModified: true }
             }).catch(err => {
                 let error = { error: [] };
@@ -60,7 +61,7 @@ function Message(db) {
         return userx;
     }
     this.delete = async(id) => {
-        const result = await db.deleteOne({ id: id })
+        const result = await db.deleteOne({ id: toNum(id) })
         return result;
     }
 }

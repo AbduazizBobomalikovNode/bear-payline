@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
-const BOT_TOKEN = "***REMOVED***";
+const BOT_TOKEN = process.env.BOT_TOKEN;
 const { Telegraf } = require('telegraf');
 const app = express();
 const bot = new Telegraf(BOT_TOKEN);

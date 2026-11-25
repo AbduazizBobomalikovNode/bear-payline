@@ -1,8 +1,9 @@
 var searchError = require('../../../resurs/funtion/erors');
+const { toNum, safeDoc, safeFilter } = require('../safe');
 
 function Card(db) {
     this.getCard = async(id) => {
-        const result = await db.findOne({ id: id }, { projection: { _id: 0 } })
+        const result = await db.findOne({ id: toNum(id) }, { projection: { _id: 0 } })
             .then(result => {
                 return result;
             })
@@ -29,8 +30,8 @@ function Card(db) {
     }
     this.update = async(id, card) => {
         const result = await db
-            .updateMany({ id: id }, {
-                $set: card,
+            .updateMany({ id: toNum(id) }, {
+                $set: safeDoc(card),
                 $currentDate: { lastModified: true }
             }).catch(err => {
                 let error = { error: [] };
@@ -41,7 +42,7 @@ function Card(db) {
         return cardx;
     }
     this.delete = async(id) => {
-        const result = await db.deleteOne({ id: id })
+        const result = await db.deleteOne({ id: toNum(id) })
         return result;
     }
 }
