@@ -80,7 +80,10 @@ npm start            # http://localhost:3000
 npm test             # 50 ta unit test (node:test)
 ```
 
-MySQL sxemasi `server/SuperDb/CloudModule/schema.sql` faylida. Unda 10 ta jadval bor, ma'lumot yo'q.
+MySQL sxemasi `server/SuperDb/CloudModule/schema.sql` faylida. Unda 11 ta jadval bor, ma'lumot yo'q. Chat uchun kerak bo'lgan `message` jadvali shu jumlaga kiradi.
+
+> [!IMPORTANT]
+> Ilova klassik `mysql` 2 drayverini ishlatadi. U MySQL 8 dagi standart `caching_sha2_password` bilan ulana olmaydi, shuning uchun ilova foydalanuvchisini `IDENTIFIED WITH mysql_native_password` bilan yarating. MySQL 9 da bu usul yo'q: MySQL 8.0 yoki MariaDB ishlating.
 
 | O'zgaruvchi | Vazifasi |
 |---|---|
@@ -97,8 +100,11 @@ Majburiy o'zgaruvchi berilmasa, server yetishmayotgan nomlarni o'zbekcha ro'yxat
 
 ## Xavfsizlik va cheklovlar
 
-> [!WARNING]
-> Repo tarixida quyidagilar qolgan: **Google service account private key** (`keyGoogle/*.json`, 5 nusxa), MySQL, MongoDB va SMS parollari, Telegram bot tokeni, JWT kaliti hamda `user` jadvalidagi telefonlar bilan SQL dump'lar. Hozirgi kodda ularning hech biri yo'q va fayllar `.gitignore` da. **Barcha kalit va parollarni almashtiring.** Google kalitini GCP Console'da o'chiring va tarixni `git filter-repo` bilan tozalang.
+> [!NOTE]
+> Git tarixi 2026-11-26 da `git filter-repo` bilan tozalandi.
+> - Tarixdan o'chirilgan fayllar: `keyGoogle` (Google service account kaliti), `.git.zip` arxivlari, SQL dump, `uploads` va `sms/img`.
+> - Kodga yozilgan MySQL, MongoDB va SMS parollari, JWT kalitining zaxira qiymati, Telegram bot tokeni va Google `private_key_id` `***REMOVED***` bilan almashtirildi.
+> - Commit SHA'lari o'zgardi: eski klonlarni qayta klon qiling.
 
 Qolgan xavflar:
 - **CVV ochiq saqlanadi.** `card.cvv` ustuni `NOT NULL`. Karta ma'lumotlarini saqlash PCI DSS talablariga zid, bu alohida qaror talab qiladi.
@@ -110,7 +116,33 @@ Qolgan xavflar:
   - Ularni tuzatish uchun major versiyaga o'tish kerak.
 - **Eski nusxalar** (`1-OY/*`, `2-OY/sever`, `2-OY/file server`, `sms`) dan faqat sirlar olib tashlangan. Ularda SQL injection va auth xatolari hali bor. `soket server/` (demo socket va push relay) himoyalanmagan.
 - **Mavjud klientlar.** `get/all`, rol va mamlakatni o'zgartirish endi faqat admin uchun ochiq. Bu eski klientlarga ta'sir qilishi mumkin. Production'dagi rollarning `licence` maydoni yuqoridagi formatda bo'lishi kerak.
-- **Demo cheklovi.** Demo real MongoDB'siz, vaqtinchalik stub bilan sinalgan.
+- **Manfiy summa.** `payments` da `amout: -100` qabul qilinadi: Joi sxemasida `positive()` yo'q. Bu biznes qoidasi bo'yicha qaror talab qiladi.
+- **Xom DB xabarlari.** 400 javobida MySQL xabari mijozga ketadi, masalan `Data too long for column 'number'`.
+- **Uzunliklar mos emas.** Karta raqamiga Joi 30 belgigacha ruxsat beradi, MySQL esa 20. Mongo'da rol `licence` 150 belgi, MySQL'da 250.
+- **Karta bog'lanishlari.** Karta o'chirilganda uning `card_has_user` yozuvlari qoladi. Hech kimga bog'lanmagan kartani id'sini bilgan har kim o'ziga bog'lay oladi.
+- **Jadval nomi.** `сountry` jadvali nomidagi birinchi harf kirillcha "с". Kod va sxemada bir xil, lekin xato qilish oson.
+
+### Sinov (2026-11-26)
+
+Ilova Docker'siz, haqiqiy MongoDB 8.2.6 (`mongodb-memory-server`) va MySQL 8.0.46 (`mysql-memory-server`) bilan ishga tushirildi. SMS provayder o'rniga lokal stub ishlatildi. Taxminan 90 ta HTTP va socket.io tekshiruvi qilindi:
+
+| Tekshiruv | Natija |
+|---|---|
+| SMS kirish, noto'g'ri kod, `alg:none` soxta token | ishlaydi; 400; 401 |
+| Boshqa foydalanuvchining kartasi, to'lovi, qurilmasi, hujjati | 403 |
+| SQL injection (`' OR '1'='1`, `1;DROP TABLE` va boshqalar) | o'tmadi: MySQL general log'da hamma qiymat escape qilingan, barcha jadvallar saqlanib qoldi |
+| NoSQL injection (`{"$ne":null}`) | 400 |
+| socket.io: tokensiz yoki soxta token | rad etiladi |
+| socket.io: uchinchi foydalanuvchi, soxta `from` | boshqalarning xabarini ololmaydi; `from` doim token egasi |
+| Server logi | 500 xato, yiqilish va ushlanmagan rejection yo'q |
+
+Bu sinov topgan va tuzatilgan xatolar:
+
+| Muammo | Oldin | Keyin |
+|---|---|---|
+| Chat | sxemada `message` jadvali yo'q edi: xabar saqlanmas, yetkazilmas, xato ham chiqmasdi | jadval qo'shildi, xabar MySQL va MongoDB'ga yoziladi |
+| `GET /api/payments/get/payments/:id` | istalgan foydalanuvchi istalgan to'lovni o'qiy olardi | egasi yoki admin, boshqalarga 403 |
+| `card_has_user` `add` / `uptade` | foydalanuvchi o'zini boshqa odamning kartasiga bog'lab, raqam va CVV'ni ko'ra olardi | karta boshqaga bog'langan bo'lsa, 403 (admin bundan mustasno) |
 
 ## Optimizatsiya: oldin va keyin
 
