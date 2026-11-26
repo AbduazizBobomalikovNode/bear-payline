@@ -58,6 +58,21 @@ CREATE TABLE IF NOT EXISTS `document` (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1515173 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 
 # ------------------------------------------------------------
+# SCHEMA DUMP FOR TABLE: message
+# ------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `message` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `to_user` int NOT NULL,
+  `from_user` int NOT NULL,
+  `text` varchar(2000) NOT NULL,
+  `is_read` tinyint(1) NOT NULL DEFAULT '0',
+  `date` varchar(40) NOT NULL,
+  `is_reply` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+
+# ------------------------------------------------------------
 # SCHEMA DUMP FOR TABLE: news
 # ------------------------------------------------------------
 

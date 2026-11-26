@@ -20,6 +20,9 @@ router.get('/get/payments/:id', auth, async(req, res) => {
             error: 'ushbu idga mos to\'lov to\'pilmadi!'
         });
     }
+    if (!canAccessUser(req.user, payments.iduser)) {
+        return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+    }
     res.json(
         payments
     );

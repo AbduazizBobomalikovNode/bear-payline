@@ -6,7 +6,7 @@ var generateId = require('../resurs/funtion/getid');
 const validate = require("../resurs/validate-sxema/card_has_user");
 var auth = require("../middlewire/auth");
 const { requireAdmin } = auth;
-const { canAccessUser } = require("../resurs/funtion/access");
+const { canAccessUser, isAdmin } = require("../resurs/funtion/access");
 
 
 
@@ -100,6 +100,14 @@ router.post('/add', auth, async(req, res) => {
         });
     }
 
+    // Karta boshqa foydalanuvchiga bog'langan bo'lsa, oddiy foydalanuvchi unga o'zini biriktira olmaydi
+    if (!isAdmin(req.user)) {
+        const owners = await (await db).cardHasUser.getCardHasUserForCard(req.body.idcard);
+        if (Array.isArray(owners) && owners.some((o) => Number(o.iduser) !== Number(req.user.id))) {
+            return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+        }
+    }
+
     let result = await (await db).cardHasUser.addCardHasUser(cardHasUser);
     if (result.hasOwnProperty('error')) {
         return res.status(400).json(
@@ -160,6 +168,12 @@ router.put('/uptade/:id', auth, async(req, res) => {
         let card = await (await db).card.getCard(req.body.idcard);
         if (!card) {
             return res.status(404).json({ error: 'ushbu idga mos karta to\'pilmadi!' });
+        }
+        if (!isAdmin(req.user)) {
+            const owners = await (await db).cardHasUser.getCardHasUserForCard(req.body.idcard);
+            if (Array.isArray(owners) && owners.some((o) => Number(o.iduser) !== Number(req.user.id))) {
+                return res.status(403).json({ error: "Sizga bu amalni bajarishga ruxsat yo'q." });
+            }
         }
     }
     body = req.body;
